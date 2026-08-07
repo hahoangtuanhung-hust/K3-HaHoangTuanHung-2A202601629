@@ -12,7 +12,10 @@ import re
 from pathlib import Path
 
 import os
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 from google import genai
 
 from core.utils import chat_with_agent

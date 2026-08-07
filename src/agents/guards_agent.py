@@ -241,7 +241,7 @@ def create_guards_agent():
     """Create VinBank agent with strong input + output guardrails (bonus target)."""
     plugins = [GuardsInputPlugin(), GuardsOutputPlugin()]
     agent = llm_agent.LlmAgent(
-        model="gpt-4o-mini",
+        model="gemini-2.0-flash",
         name="guards_assistant",
         instruction=GUARDS_INSTRUCTION,
     )

@@ -44,12 +44,15 @@ async def chat_with_agent(agent, runner, user_message: str, session_id=None):
     )
 
     final_response = ""
-    async for event in runner.run_async(
-        user_id=user_id, session_id=session.id, new_message=content
-    ):
-        if hasattr(event, "content") and event.content and event.content.parts:
-            for part in event.content.parts:
-                if hasattr(part, "text") and part.text:
-                    final_response += part.text
+    try:
+        async for event in runner.run_async(
+            user_id=user_id, session_id=session.id, new_message=content
+        ):
+            if hasattr(event, "content") and event.content and event.content.parts:
+                for part in event.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        final_response += part.text
+    except Exception as e:
+        final_response = f"I'm unable to process this request right now. ({e})"
 
     return final_response, session

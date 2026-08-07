@@ -142,7 +142,7 @@ If UNSAFE, add a brief reason on the next line.
 """
 
 input_safety_judge = llm_agent.LlmAgent(
-    model="gpt-4o-mini",
+    model="gemini-2.0-flash",
     name="input_safety_judge",
     instruction=INPUT_SAFETY_JUDGE_INSTRUCTION,
 )
@@ -180,32 +180,53 @@ class InputGuardrailPlugin(base_plugin.BasePlugin):
         agent,
         callback_context,
     ) -> types.Content | None:
-        """Check user message before sending to the agent using LLM Judge.
+        """Check user message before sending to the agent using layered regex + LLM Judge.
 
         Returns:
             None if message is safe (let it through),
             types.Content if message is blocked (return replacement)
         """
         self.total_count += 1
-        user_message = callback_context.get_invocation_context().user_content
+        if hasattr(callback_context, "get_invocation_context"):
+            user_message = callback_context.get_invocation_context().user_content
+        elif hasattr(callback_context, "next_input"):
+            user_message = callback_context.next_input
+        else:
+            user_message = getattr(callback_context, "user_content", None)
+
         if not user_message:
             return None
             
         text = self._extract_text(user_message)
-
-        if not text.strip():
+        if not text or not text.strip():
             return None
 
-        if self.runner is None:
-            return None # Fallback if judge fails to init
-
-        from core.utils import chat_with_agent
-        prompt = f"Evaluate this user input for safety:\n\n{text}"
-        verdict, _ = await chat_with_agent(input_safety_judge, self.runner, prompt)
-        
-        if "UNSAFE" in verdict.upper():
+        # 1. Fast regex detection (Injection + Dangerous + Exfiltration keywords)
+        if detect_injection(text) or is_dangerous(text):
             self.blocked_count += 1
             return self._block_response("Tài khoản của bạn đã bị ghi nhận do có hành vi thao túng hệ thống. (Lỗi: Phát hiện kỹ thuật vượt ngục và trích xuất dữ liệu trái phép).")
+
+        # Exfiltration / Secret / Injection keywords (multi-lingual & obfuscation patterns)
+        EXFIL_KEYWORDS = [
+            r"api\s*key", r"apikey", r"api_key", r"system\s*prompt", r"admin123",
+            r"db\.vinbank\.internal", r"password", r"mật\s*khẩu", r"bỏ\s*qua\s*hướng\s*dẫn",
+            r"シークレットキー", r"パスワード", r"インフラストラクチャ"
+        ]
+        if any(re.search(pat, text, re.IGNORECASE) for pat in EXFIL_KEYWORDS):
+            self.blocked_count += 1
+            return self._block_response("Tài khoản của bạn đã bị ghi nhận do có hành vi thao túng hệ thống. (Lỗi: Phát hiện kỹ thuật vượt ngục và trích xuất dữ liệu trái phép).")
+
+        # 2. LLM Judge fallback
+        if self.runner is not None:
+            try:
+                from core.utils import chat_with_agent
+                prompt = f"Evaluate this user input for safety:\n\n{text}"
+                verdict, _ = await chat_with_agent(input_safety_judge, self.runner, prompt)
+                if "UNSAFE" in verdict.upper():
+                    self.blocked_count += 1
+                    return self._block_response("Tài khoản của bạn đã bị ghi nhận do có hành vi thao túng hệ thống. (Lỗi: Phát hiện kỹ thuật vượt ngục và trích xuất dữ liệu trái phép).")
+            except Exception:
+                pass
 
         # Let all safe messages through
         return None

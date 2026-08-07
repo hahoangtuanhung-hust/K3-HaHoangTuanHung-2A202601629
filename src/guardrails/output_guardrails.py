@@ -89,7 +89,7 @@ If UNSAFE, add a brief reason on the next line.
 """
 
 safety_judge_agent = llm_agent.LlmAgent(
-    model="gpt-4o-mini",
+    model="gemini-2.0-flash",
     name="safety_judge",
     instruction=SAFETY_JUDGE_INSTRUCTION,
 )
