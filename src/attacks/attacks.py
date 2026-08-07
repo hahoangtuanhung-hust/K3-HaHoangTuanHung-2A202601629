@@ -314,7 +314,7 @@ async def run_attacks(
         path = write_run_attack_json(
             results, target_name=target_name, filepath=output_path
         )
-        print(f"Saved run output → {path}")
+        print(f"Saved run output -> {path}")
 
     return results
 

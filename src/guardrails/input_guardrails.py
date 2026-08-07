@@ -138,11 +138,11 @@ class InputGuardrailPlugin(base_plugin.BasePlugin):
             parts=[types.Part.from_text(text=message)],
         )
 
-    async def on_user_message_callback(
+    async def before_agent_callback(
         self,
         *,
-        invocation_context: InvocationContext,
-        user_message: types.Content,
+        agent,
+        callback_context,
     ) -> types.Content | None:
         """Check user message before sending to the agent.
 
@@ -151,6 +151,10 @@ class InputGuardrailPlugin(base_plugin.BasePlugin):
             types.Content if message is blocked (return replacement)
         """
         self.total_count += 1
+        user_message = callback_context.get_invocation_context().user_content
+        if not user_message:
+            return None
+            
         text = self._extract_text(user_message)
 
         # 1. Call detect_injection(text)
@@ -214,8 +218,8 @@ async def test_input_plugin():
         user_content = types.Content(
             role="user", parts=[types.Part.from_text(text=msg)]
         )
-        result = await plugin.on_user_message_callback(
-            invocation_context=None, user_message=user_content
+        result = await plugin.before_agent_callback(
+            agent=None, callback_context=type("Ctx", (), {"next_input": user_content})
         )
         status = "BLOCKED" if result else "PASSED"
         print(f"  [{status}] '{msg[:60]}'")

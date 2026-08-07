@@ -161,7 +161,7 @@ async def part5_assignment_suite():
     import os
 
     print("\n" + "=" * 60)
-    print("PART 5: Assignment suite → outputs/*.json")
+    print("PART 5: Assignment suite -> outputs/*.json")
     print("=" * 60)
 
     from assignment.pipeline import (

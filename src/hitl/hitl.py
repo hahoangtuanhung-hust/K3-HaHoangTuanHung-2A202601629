@@ -65,32 +65,39 @@ class ConfidenceRouter:
         Returns:
             RoutingDecision with routing action and metadata
         """
-        # TODO 11: Implement routing logic
-        #
-        # 1. Check if action_type is in HIGH_RISK_ACTIONS
-        #    -> If yes: always escalate (action="escalate", priority="high",
-        #       requires_human=True, reason="High-risk action: {action_type}")
-        #
-        # 2. Check confidence thresholds:
-        #    - confidence >= 0.9:
-        #      action="auto_send", priority="low",
-        #      requires_human=False, reason="High confidence"
-        #
-        #    - 0.7 <= confidence < 0.9:
-        #      action="queue_review", priority="normal",
-        #      requires_human=True, reason="Medium confidence — needs review"
-        #
-        #    - confidence < 0.7:
-        #      action="escalate", priority="high",
-        #      requires_human=True, reason="Low confidence — escalating"
-
-        return RoutingDecision(
-            action="auto_send",
-            confidence=confidence,
-            reason="TODO: implement routing logic",
-            priority="low",
-            requires_human=False,
-        )  # TODO: Replace with implementation
+        if action_type in HIGH_RISK_ACTIONS:
+            return RoutingDecision(
+                action="escalate",
+                confidence=confidence,
+                reason=f"High-risk action: {action_type}",
+                priority="high",
+                requires_human=True,
+            )
+            
+        if confidence >= self.HIGH_THRESHOLD:
+            return RoutingDecision(
+                action="auto_send",
+                confidence=confidence,
+                reason="High confidence",
+                priority="low",
+                requires_human=False,
+            )
+        elif confidence >= self.MEDIUM_THRESHOLD:
+            return RoutingDecision(
+                action="queue_review",
+                confidence=confidence,
+                reason="Medium confidence — needs review",
+                priority="normal",
+                requires_human=True,
+            )
+        else:
+            return RoutingDecision(
+                action="escalate",
+                confidence=confidence,
+                reason="Low confidence — escalating",
+                priority="high",
+                requires_human=True,
+            )
 
 
 # ============================================================
@@ -111,33 +118,33 @@ class ConfidenceRouter:
 hitl_decision_points = [
     {
         "id": 1,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
-        "approval_path": "TODO: Explain approve, reject and timeout behavior",
-        "audit_fields": "TODO: List correlation ID, intent, diff and reviewer decision",
+        "name": "High Value Money Transfer",
+        "trigger": "Action is transfer_money AND amount > $10,000 OR international payee",
+        "hitl_model": "human-in-the-loop",
+        "context_needed": "User account history, recent logins, IP address, payee details, and fraud risk score",
+        "example": "A user requests transferring $50,000 to a newly added offshore account",
+        "approval_path": "Approve -> transfer executes; Reject -> transfer blocked & account flagged; Timeout -> automatically reject after 10 mins",
+        "audit_fields": "request_id, user_id, transfer_amount, payee_id, reviewer_id, reviewer_decision, timestamp",
     },
     {
         "id": 2,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
-        "approval_path": "TODO: Explain approve, reject and timeout behavior",
-        "audit_fields": "TODO: List correlation ID, intent, diff and reviewer decision",
+        "name": "Medium Confidence Information Request",
+        "trigger": "ConfidenceRouter returns queue_review (confidence between 0.7 and 0.9)",
+        "hitl_model": "human-on-the-loop",
+        "context_needed": "User's query, agent's generated response, and the retrieved context documents",
+        "example": "User asks a complex question about joint account mortgages. Agent answers but is only 80% confident",
+        "approval_path": "Approve -> do nothing (already sent); Reject -> human sends a follow-up correction email to user; Timeout -> response stays as-is",
+        "audit_fields": "request_id, query, agent_response, confidence_score, reviewer_correction_text",
     },
     {
         "id": 3,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
-        "approval_path": "TODO: Explain approve, reject and timeout behavior",
-        "audit_fields": "TODO: List correlation ID, intent, diff and reviewer decision",
+        "name": "Suspected Jailbreak or Policy Violation",
+        "trigger": "OutputGuardrail LLM-as-a-judge flags the interaction as potentially unsafe, or input triggers partial block",
+        "hitl_model": "human-as-tiebreaker",
+        "context_needed": "Full conversation history, user risk score, triggered guardrail logs, judge model rationale",
+        "example": "User uses a creative story framing to ask about internal banking limits. Judge model is unsure if it's safe",
+        "approval_path": "Approve (Safe) -> unblock user and allow conversation; Reject (Unsafe) -> block user / freeze account; Timeout -> permanently block conversation",
+        "audit_fields": "request_id, user_id, conversation_log, judge_score, tiebreaker_decision, reviewer_notes",
     },
 ]
 
