@@ -19,7 +19,7 @@ from core.config import setup_api_key
 async def part1_attacks():
     """Hạng mục B: attack unsafe agent, then try guards agent (điểm cộng)."""
     print("\n" + "=" * 60)
-    print("PART 1 / Hạng mục B: Attack Unsafe + Guards agents")
+    print("PART 1 / Hang muc B: Attack Unsafe + Guards agents")
     print("=" * 60)
 
     from agents.agent import create_unsafe_agent, test_agent
