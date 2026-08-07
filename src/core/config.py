@@ -13,10 +13,22 @@ def setup_api_key():
     env_path = Path(__file__).resolve().parent.parent.parent / ".env"
     load_dotenv(dotenv_path=env_path)
 
-    if "GOOGLE_API_KEY" not in os.environ:
-        os.environ["GOOGLE_API_KEY"] = input("Enter Google API Key: ")
+    if "GOOGLE_API_KEY" not in os.environ or not os.environ["GOOGLE_API_KEY"]:
+        try:
+            import sys
+            if sys.stdin and hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
+                os.environ["GOOGLE_API_KEY"] = input("Enter Google API Key: ")
+        except Exception:
+            pass
+    if "OPENAI_API_KEY" not in os.environ or not os.environ["OPENAI_API_KEY"]:
+        try:
+            import sys
+            if sys.stdin and hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
+                os.environ["OPENAI_API_KEY"] = input("Enter OpenAI API Key: ")
+        except Exception:
+            pass
     os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "0"
-    print("API key loaded.")
+    print("API keys loaded.")
 
 
 # Allowed banking topics (used by topic_filter)
