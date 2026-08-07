@@ -14,6 +14,7 @@ import asyncio
 import argparse
 
 from core.config import setup_api_key
+from app import app  # Export app for Vercel auto-discovery
 
 
 async def part1_attacks():
