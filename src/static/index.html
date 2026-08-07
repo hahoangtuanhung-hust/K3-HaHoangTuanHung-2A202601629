@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinBank Security Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Chatbot Interface -->
+        <div class="chat-section glass">
+            <h2>VinBank Customer Agent</h2>
+            <div class="chat-window" id="chatWindow">
+                <div class="message system">
+                    Welcome to VinBank Customer Service. How can I help you today?
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Type a message or attack prompt..." autocomplete="off">
+                <button id="sendBtn">Send</button>
+            </div>
+        </div>
+
+        <!-- Security & Audit Dashboard -->
+        <div class="dashboard-section">
+            <div class="metrics-panel glass">
+                <h2>Security Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Total Requests</div>
+                        <div class="metric-value" id="totalReqs">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Blocked</div>
+                        <div class="metric-value error" id="blockedReqs">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Block Rate</div>
+                        <div class="metric-value" id="blockRate">0%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Rate Limited</div>
+                        <div class="metric-value warning" id="rateLimitHits">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="logs-panel glass">
+                <h2>Real-time Audit Logs</h2>
+                <div class="table-container">
+                    <table id="logsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Request ID</th>
+                                <th>Content Snippet</th>
+                                <th>Decision</th>
+                                <th>Layer</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsBody">
+                            <!-- Logs will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

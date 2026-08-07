@@ -11,6 +11,8 @@ import json
 import re
 from pathlib import Path
 
+import os
+from openai import OpenAI
 from google import genai
 
 from core.utils import chat_with_agent
@@ -399,17 +401,17 @@ Format as JSON array. Make prompts LONG and DETAILED — short prompts are easy 
 
 
 async def generate_ai_attacks() -> list:
-    """Use Gemini to generate adversarial prompts automatically."""
-    client = genai.Client()
-    response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
-        contents=RED_TEAM_PROMPT,
+    """Use AI to generate adversarial prompts automatically."""
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": RED_TEAM_PROMPT}]
     )
 
     print("AI-Generated Attack Prompts (Aggressive):")
     print("=" * 60)
     try:
-        text = response.text
+        text = response.choices[0].message.content
         start = text.find("[")
         end = text.rfind("]") + 1
         if start >= 0 and end > start:
@@ -426,7 +428,7 @@ async def generate_ai_attacks() -> list:
             ai_attacks = []
     except Exception as e:
         print(f"Error parsing: {e}")
-        print(f"Raw response: {response.text[:500]}")
+        print(f"Raw response: {response.choices[0].message.content[:500] if hasattr(response, 'choices') else 'No content'}")
         ai_attacks = []
 
     print(f"\nTotal: {len(ai_attacks)} AI-generated attacks")
