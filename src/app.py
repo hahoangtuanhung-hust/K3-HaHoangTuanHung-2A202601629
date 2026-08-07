@@ -1,7 +1,12 @@
-import json
+import sys
 import os
+import json
 import uuid
 import asyncio
+
+# Ensure src directory is in sys.path for Vercel/serverless imports
+sys.path.insert(0, os.path.dirname(__file__))
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -87,8 +92,11 @@ async def chat_endpoint(request: Request):
     )
 
     # Export json to file so UI can read it
-    audit.export_json()
-    monitor.export_json()
+    try:
+        audit.export_json()
+        monitor.export_json()
+    except Exception:
+        pass
 
     return {
         "response": response,
@@ -110,6 +118,9 @@ async def get_logs():
                 logs = json.load(f)
         except json.JSONDecodeError:
             pass
+    if not logs:
+        # Fallback to in-memory logs if file system read failed or empty
+        logs = audit.snapshot()
 
     metrics = {}
     if os.path.exists(metrics_file):
@@ -118,15 +129,18 @@ async def get_logs():
                 metrics = json.load(f)
         except json.JSONDecodeError:
             pass
+    if not metrics:
+        metrics = monitor.snapshot()
 
     return {
         "logs": logs[-20:],  # Return only the last 20 logs for UI performance
         "metrics": metrics
     }
 
-# Ensure the static folder exists
-os.makedirs("static", exist_ok=True)
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Ensure the static folder path is dynamically resolved
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
