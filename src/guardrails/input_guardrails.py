@@ -142,7 +142,7 @@ If UNSAFE, add a brief reason on the next line.
 """
 
 input_safety_judge = llm_agent.LlmAgent(
-    model="gemini-2.0-flash",
+    model="gemini-flash-latest",
     name="input_safety_judge",
     instruction=INPUT_SAFETY_JUDGE_INSTRUCTION,
 )
